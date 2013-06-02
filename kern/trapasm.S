@@ -45,12 +45,45 @@
 /*
  * Lab 1: Your code here for generating entry points for the different traps.
  */
+//entry points
+TRAPHANDLER_NOEC(iv0 ,0)
+TRAPHANDLER_NOEC(iv1 ,1)
+TRAPHANDLER_NOEC(iv2 ,2)
+TRAPHANDLER_NOEC(iv3 ,3)
+TRAPHANDLER_NOEC(iv4 ,4)
+TRAPHANDLER_NOEC(iv5 ,5)
+TRAPHANDLER_NOEC(iv6 ,6)
+TRAPHANDLER_NOEC(iv7 ,7)
+TRAPHANDLER(iv8 ,8)
+TRAPHANDLER_NOEC(iv9 ,9)
+TRAPHANDLER(iv10,10)
+TRAPHANDLER(iv11,11)
+TRAPHANDLER(iv12,12)
+TRAPHANDLER(iv13,13)
+TRAPHANDLER(iv14,14)
+TRAPHANDLER_NOEC(iv15,15)
+TRAPHANDLER_NOEC(iv16,16)
+TRAPHANDLER(iv17,17)
+TRAPHANDLER_NOEC(iv18,18)
+TRAPHANDLER_NOEC(iv19,19)
 
 /*
  * Lab 1: Your code here for _alltraps
  */
-
-
+.globl _alltraps
+_alltraps:
+	pushl %ds
+	pushl %es
+        pushl %fs
+        pushl %gs
+        pushal
+        // load CPU_GDT_KDATA into %ds and %es
+        movw $CPU_GDT_KDATA, %ax
+        movw %ax, %es
+        movw %ax, %ds
+        // pushl %esp to pass a pointer to the trapframe as an argument to trap()
+        pushl %esp
+        call trap
 
 //
 // Trap return code.
@@ -69,5 +102,38 @@ trap_return:
 /*
  * Lab 1: Your code here for trap_return
  */
-1:	jmp	1b		// just spin
+
+	movl 4(%esp), %esp
+	popal
+	popl %gs
+	popl %fs
+	popl %ds
+	popl %es
+	addl $8, %esp
+	iret
+
+//interrupt vectors
+.data
+.globl ivs
+ivs:
+	.long iv0  // #DE Divide Error
+	.long iv1  // #DB RESERVED
+	.long iv2  // — NMI Interrupt Interrupt Nonmaskable external interrupt.
+	.long iv3  // #BP Breakpoint
+	.long iv4  // #OF Overflow
+	.long iv5  // #BR BOUND Range Exceeded
+	.long iv6  // #UD Invalid Opcode (Undefined Opcode)
+	.long iv7  // #NM Device Not Available (Math Coprocessor)
+	.long iv8  // #DF Double Fault
+	.long iv9  // Coprocessor Segment Overrun (reserved)
+	.long iv10 // #TS Invalid TSS
+	.long iv11 // #NP Segment Not Present
+	.long iv12 // #SS Stack-Segment Fault
+	.long iv13 // #GP General Protection
+	.long iv14 // #PF Page Fault
+	.long iv15 // — (Intel reserved. Do not use.)
+	.long iv16 // #MF x87 FPU Floating-Point Error (Math Fault)
+	.long iv17 // #AC Alignment Check
+	.long iv18 // #MC Machine Check
+	.long iv19 // #XF SIMD Floating-Point
 

@@ -17,6 +17,7 @@
 #include <kern/cons.h>
 #include <kern/init.h>
 
+extern int ivs[];
 
 // Interrupt descriptor table.  Must be built at run time because
 // shifted function addresses can't be represented in relocation records.
@@ -33,8 +34,12 @@ static void
 trap_init_idt(void)
 {
 	extern segdesc gdt[];
-	
-	panic("trap_init() not implemented.");
+	int i;
+        for (i=0; i<20 ; i++) {
+            SETGATE(idt[i], 0, 1<<3 , ivs[i], 0);
+        }
+        SETGATE(idt[3], 0, 1<<3 , ivs[3], 3);
+        SETGATE(idt[4], 0, 1<<3 , ivs[4], 3);
 }
 
 void

@@ -61,9 +61,10 @@ mem_init(void)
 	// Insert code here to:
 	// (1)	allocate physical memory for the mem_pageinfo array,
 	//	making it big enough to hold mem_npage entries.
+        pageinfo *mem_pageinfo = (pageinfo*)ROUNDUP((uint32_t)end,
+                (uint32_t)sizeof(pageinfo));
 	// (2)	add all pageinfo structs in the array representing
 	//	available memory that is not in use for other purposes.
-	//
 	// For step (2), here is some incomplete/incorrect example code
 	// that simply marks all mem_npage pages as free.
 	// Which memory is actually free?
@@ -79,20 +80,33 @@ mem_init(void)
 	//     Hint: the linker places the kernel (see start and end above),
 	//     but YOU decide where to place the pageinfo array.
 	// Change the code to reflect this.
+        memset(mem_pageinfo, 0 , sizeof(pageinfo)*mem_npage);
+
 	pageinfo **freetail = &mem_freelist;
 	int i;
+        // reserving page 0 and 1
 	for (i = 0; i < mem_npage; i++) {
-		// A free page has no references to it.
+            // physical address of current pageinfo
+            uint32_t paddr = mem_pi2phys(mem_pageinfo + i);
+            if ((i == 0 || i == 1 || // pages 0 and 1 are reserved for idt, bios, and bootstrap (see above)
+                        (paddr + PAGESIZE >= MEM_IO && paddr < MEM_EXT) || // IO section is reserved
+                        (paddr + PAGESIZE >= (uint32_t) &start[0] && paddr < (uint32_t) &end[0]) || // kernel, 
+                        (paddr + PAGESIZE >= (uint32_t) &mem_pageinfo && // start of pageinfo array
+                         paddr < (uint32_t) &mem_pageinfo[mem_npage]) // end of pageinfo array
+                )){
+                mem_pageinfo[i].refcount = 1;
+            } else {
 		mem_pageinfo[i].refcount = 0;
 
 		// Add the page to the end of the free list.
 		*freetail = &mem_pageinfo[i];
 		freetail = &mem_pageinfo[i].free_next;
+            }
 	}
 	*freetail = NULL;	// null-terminate the freelist
 
 	// ...and remove this when you're ready.
-	panic("mem_init() not implemented");
+	/*panic("mem_init() not implemented");*/
 
 	// Check to make sure the page allocator seems to work correctly.
 	mem_check();
