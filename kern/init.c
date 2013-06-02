@@ -54,23 +54,26 @@ init(void)
 	// Lab 1: test cprintf and debug_trace
 	cprintf("1234 decimal is %o octal!\n", 1234);
 	debug_check();
-	cprintf("debug check completed\n");
 	// Initialize and load the bootstrap CPU's GDT, TSS, and IDT.
 	cpu_init();
-	cprintf("cpu init completed\n");
 	trap_init();
-	cprintf("trap init completed\n");
 
 	// Physical memory detection/initialization.
 	// Can't call mem_alloc until after we do this!
 	mem_init();
-	cprintf("mem init completed\n");
-
-
-	// Lab 1: change this so it enters user() in user mode,
 	// running on the user_stack declared above,
 	// instead of just calling user() directly.
-	user();
+        trapframe tf;
+        tf.esp=(uintptr_t)user_stack;
+        tf.cs = (CPU_GDT_UCODE) | 3;
+        tf.ds = (CPU_GDT_UDATA) | 3;
+        tf.es = tf.ds;
+        tf.ss = tf.ds;
+        tf.eflags = FL_IOPL_3;
+        tf.esp = (uintptr_t)user_stack+PAGESIZE;
+        tf.eip = (uint32_t)&user;
+        trap_return(&tf);
+	/*user();*/
 }
 
 // This is the first function that gets run in user mode (ring 3).

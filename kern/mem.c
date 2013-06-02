@@ -128,7 +128,13 @@ mem_alloc(void)
 {
 	// Fill this function in
 	// Fill this function in.
-	panic("mem_alloc not implemented.");
+	/*panic("mem_alloc not implemented.");*/
+        pageinfo *page_info = mem_freelist;
+        if (page_info != NULL) {
+            mem_freelist = page_info->free_next;
+            page_info->free_next = NULL;
+        }
+        return page_info;
 }
 
 //
@@ -139,7 +145,9 @@ void
 mem_free(pageinfo *pi)
 {
 	// Fill this function in.
-	panic("mem_free not implemented.");
+	/*panic("mem_free not implemented.");*/
+        pi->free_next = mem_freelist;
+        mem_freelist = pi;
 }
 
 //
